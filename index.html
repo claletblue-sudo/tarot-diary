@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#fbf5ff">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="오늘의 타로">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<title>오늘의 타로</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Gamja+Flower&family=Poor+Story&display=swap');
+
+  :root {
+    --bg-deep: #fbf5ff;
+    --bg-panel: #ffffff;
+    --bg-card: #fffaf2;
+    --gold: #c9975a;
+    --gold-soft: #cf9f66;
+    --gold-text: #8a5a2a;
+    --ink: #4a3f66;
+    --ink-dim: #5f5286;
+    --ink-faint: #726494;
+    --border: #e4cdf0;
+    --accent-line: linear-gradient(90deg, transparent, #8a5a2a, transparent);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg-deep);
+    background-image:
+      radial-gradient(ellipse at 15% 0%, rgba(190, 150, 255, 0.10), transparent 55%),
+      radial-gradient(ellipse at 85% 10%, rgba(240, 168, 196, 0.10), transparent 50%),
+      radial-gradient(ellipse at 80% 100%, rgba(201, 151, 90, 0.10), transparent 55%);
+    color: var(--ink);
+    font-family: 'Poor Story', sans-serif;
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  .wrap {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+
+  .header { text-align: center; margin-bottom: 28px; }
+
+  .header .eyebrow {
+    font-family: 'Gamja Flower', sans-serif;
+    font-size: 16px;
+    color: var(--gold-text);
+    letter-spacing: 0.08em;
+    margin: 0 0 8px;
+  }
+
+  .header h1 {
+    font-family: 'Gamja Flower', sans-serif;
+    font-size: 30px;
+    font-weight: 400;
+    margin: 0 0 12px;
+    letter-spacing: 0.02em;
+  }
+
+  .header .date { font-size: 13px; color: var(--ink-faint); margin: 0; }
+
+  .divider { height: 1px; background: var(--accent-line); margin: 32px 0; border: none; }
+
+  /* ── 카드 뽑기 전 ───────────────────────── */
+  .draw-stage { text-align: center; padding: 24px 0; }
+
+  .card-back {
+    width: 140px; height: 220px;
+    margin: 0 auto 32px;
+    border-radius: 14px;
+    background:
+      repeating-linear-gradient(135deg, transparent, transparent 8px, rgba(201,151,90,0.10) 8px, rgba(201,151,90,0.10) 9px),
+      linear-gradient(160deg, #fdf1e6, #f5e7fb);
+    border: 1px solid var(--gold-soft);
+    box-shadow: 0 6px 18px rgba(180, 150, 210, 0.18);
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .card-back:active { transform: scale(0.97); }
+  .card-back::before {
+    content: '';
+    position: absolute;
+    inset: 10px;
+    border: 1px solid rgba(201,151,90,0.4);
+    border-radius: 8px;
+  }
+  .card-back .star {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 32px;
+    color: var(--gold);
+    opacity: 0.75;
+  }
+
+  .draw-btn {
+    background: transparent;
+    border: 1px solid var(--gold-soft);
+    color: var(--gold-text);
+    font-family: 'Gamja Flower', sans-serif;
+    font-size: 16px;
+    padding: 12px 32px;
+    border-radius: 20px;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    transition: all 0.25s;
+  }
+  .draw-btn:hover { background: rgba(201,151,90,0.10); border-color: var(--gold); }
+  .draw-btn:active { transform: scale(0.98); }
+
+  .hint { margin-top: 16px; font-size: 12px; color: var(--ink-faint); }
+
+  /* ── 결과 ───────────────────────────────── */
+  .result-stage { display: none; }
+  .result-stage.show { display: block; animation: fadeUp 0.5s ease; }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .card-reveal {
+    width: 160px; height: 250px;
+    margin: 0 auto 24px;
+    border-radius: 14px;
+    border: 1px solid var(--gold-soft);
+    background: linear-gradient(160deg, #fffaf3, #f8f0ff);
+    box-shadow: 0 8px 20px rgba(180, 150, 210, 0.16);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    position: relative;
+  }
+  .card-reveal::before {
+    content: '';
+    position: absolute;
+    inset: 8px;
+    border: 1px solid rgba(201,151,90,0.3);
+    border-radius: 8px;
+  }
+  .card-reveal .arcana-num {
+    font-size: 13px;
+    color: var(--ink-faint);
+    letter-spacing: 0.1em;
+    margin-bottom: 12px;
+  }
+  .card-reveal .symbol { font-size: 44px; margin-bottom: 12px; line-height: 1; transition: transform 0.4s ease; }
+  .card-reveal .symbol.reversed { transform: rotate(180deg); }
+  .card-reveal .name-kr {
+    font-family: 'Gamja Flower', sans-serif;
+    font-size: 20px;
+    font-weight: 400;
+    color: var(--gold-text);
+    text-align: center;
+    margin: 0 0 4px;
+  }
+  .card-reveal .name-en {
+    font-size: 13px;
+    color: var(--ink-dim);
+    text-align: center;
+    margin: 0;
+  }
+  .card-reveal .orientation {
+    margin-top: 12px;
+    font-size: 11px;
+    color: var(--ink-faint);
+    letter-spacing: 0.08em;
+    padding: 3px 10px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+  }
+
+  .meaning-box {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 18px;
+    box-shadow: 0 3px 12px rgba(160, 130, 200, 0.07);
+  }
+  .meaning-box .label {
+    font-family: 'Gamja Flower', sans-serif;
+    font-size: 15px;
+    color: var(--gold-text);
+    margin: 0 0 8px;
+  }
+  .meaning-box p { font-size: 15.5px; line-height: 1.85; color: var(--ink); margin: 0; }
+
+  .keywords { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+  .keyword-chip {
+    font-size: 12px;
+    color: var(--ink-dim);
+    background: #faf5ff;
+    border: 1px solid var(--border);
+    padding: 5px 12px;
+    border-radius: 20px;
+  }
+
+  /* ── 입력 블록 (오늘의 일기) ────────────── */
+  .entry-block {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 14px;
+    box-shadow: 0 3px 12px rgba(160, 130, 200, 0.06);
+  }
+  .entry-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+  .entry-title { font-family: 'Gamja Flower', sans-serif; font-size: 16px; color: var(--ink); }
+  .entry-sub { font-size: 12px; color: var(--ink-faint); }
+
+  textarea {
+    width: 100%;
+    min-height: 90px;
+    background: #fdfbff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--ink);
+    font-family: 'Poor Story', sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+    padding: 14px;
+    resize: vertical;
+  }
+  textarea:focus { outline: none; border-color: var(--gold-soft); }
+  textarea::placeholder { color: var(--ink-faint); }
+
+  .save-btn {
+    width: 100%;
+    background: rgba(201,151,90,0.12);
+    border: 1px solid var(--gold-soft);
+    color: var(--gold-text);
+    font-family: 'Gamja Flower', sans-serif;
+    font-size: 15px;
+    padding: 11px;
+    border-radius: 20px;
+    cursor: pointer;
+    margin-top: 10px;
+  }
+  .save-btn:hover { background: rgba(201,151,90,0.2); }
+
+  .save-status {
+    text-align: center;
+    font-size: 12px;
+    color: var(--ink-faint);
+    margin: 8px 0 0;
+    min-height: 15px;
+  }
+  .save-status.saved { color: var(--gold-text); }
+
+  .link-btn {
+    background: transparent;
+    border: none;
+    color: var(--gold-text);
+    font-family: 'Gamja Flower', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    padding: 4px;
+  }
+
+  /* ── 정원 달력 (지난 기록) ───────────────── */
+  .archive-section { margin-top: 8px; }
+  .archive-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .archive-header h2 {
+    font-family: 'Gamja Flower', sans-serif;
+    font-size: 17px;
+    font-weight: 400;
+    color: var(--ink-dim);
+    margin: 0;
+    letter-spacing: 0.03em;
+  }
+  .archive-count { font-size: 12px; color: var(--ink-faint); }
+
+  .calendar-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    margin-bottom: 14px;
+  }
+  .cal-nav-btn {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    color: var(--gold-text);
+    font-size: 13px;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+  .cal-nav-btn:hover { border-color: var(--gold-soft); background: rgba(201,151,90,0.08); }
+  .calendar-month-label {
+    font-family: 'Gamja Flower', sans-serif;
+    font-size: 15px;
+    color: var(--ink);
+    min-width: 96px;
+    text-align: center;
+    letter-spacing: 0.02em;
+  }
+
+  .calendar-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    font-size: 11px;
+    color: var(--ink-faint);
+    margin-bottom: 6px;
+  }
+
+  .calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+  }
+
+  .cal-day {
+    aspect-ratio: 1 / 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0;
+    font-family: inherit;
+    color: var(--ink-dim);
+    cursor: default;
+  }
+  .cal-day.empty-cell { background: transparent; border-color: transparent; }
+  .cal-day.has-entry { cursor: pointer; }
+  .cal-day.has-entry:hover { border-color: var(--gold-soft); }
+  .cal-day.today { border-color: var(--gold); }
+  .cal-day.today .cal-date-num { color: var(--gold-text); font-weight: 700; }
+  .cal-day .cal-flower { height: 16px; display: flex; align-items: flex-end; justify-content: center; }
+  .cal-day .cal-date-num { font-size: 11.5px; line-height: 1; }
+  .cal-flower-svg .cal-petal { opacity: 0.95; }
+
+  .empty-archive {
+    text-align: center;
+    padding: 24px;
+    color: var(--ink-faint);
+    font-size: 13px;
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    width: 100%;
+    grid-column: 1 / -1;
+  }
+
+  .garden-detail {
+    margin-top: 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 3px 12px rgba(160, 130, 200, 0.07);
+    animation: fadeUp 0.35s ease;
+  }
+  .detail-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; gap: 10px; }
+  .detail-date { font-family: 'Gamja Flower', sans-serif; font-size: 15px; color: var(--ink); margin: 0 0 2px; }
+  .detail-card { font-family: 'Gamja Flower', sans-serif; font-size: 13px; color: var(--gold-text); margin: 0; }
+
+  .footer-note {
+    text-align: center;
+    font-size: 13px;
+    color: var(--ink-faint);
+    margin-top: 48px;
+    font-family: 'Gamja Flower', sans-serif;
+    letter-spacing: 0.05em;
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="header">
+    <p class="eyebrow">Daily Tarot</p>
+    <h1>오늘의 카드</h1>
+    <p class="date" id="today-date"></p>
+  </div>
+
+  <hr class="divider">
+
+  <div id="today-section">
+    <div class="draw-stage" id="draw-stage">
+      <div class="card-back" id="card-back" onclick="drawCard()">
+        <span class="star">&#10022;</span>
+      </div>
+      <button class="draw-btn" onclick="drawCard()">오늘의 조언 카드 뽑기</button>
+      <p class="hint">카드를 뽑고, 하루 중 언제든 마음을 적어보세요</p>
+    </div>
+
+    <div class="result-stage" id="result-stage">
+      <div class="card-reveal">
+        <p class="arcana-num" id="arcana-num"></p>
+        <div class="symbol" id="card-symbol"></div>
+        <p class="name-kr" id="card-name-kr"></p>
+        <p class="name-en" id="card-name-en"></p>
+        <span class="orientation" id="card-orientation"></span>
+      </div>
+
+      <div class="meaning-box">
+        <p class="label">카드가 전하는 말</p>
+        <p id="card-meaning"></p>
+      </div>
+
+      <div class="keywords" id="card-keywords"></div>
+
+      <div class="entry-block">
+        <div class="entry-head">
+          <span class="entry-title">&#128221; 오늘의 일기</span>
+          <span class="entry-sub">하루 중 언제든 편하게</span>
+        </div>
+        <textarea id="journal-text" placeholder="이 카드를 보며 떠오른 생각을 적어보세요"></textarea>
+        <button class="save-btn" onclick="saveToday()">저장</button>
+        <p class="save-status" id="journal-status"></p>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <div class="archive-section">
+    <div class="archive-header">
+      <h2>&#127800; 나의 정원 달력</h2>
+      <span class="archive-count" id="archive-count"></span>
+    </div>
+    <div class="calendar-nav">
+      <button class="cal-nav-btn" type="button" onclick="changeMonth(-1)" aria-label="이전 달">&#10094;</button>
+      <span class="calendar-month-label" id="calendar-month-label"></span>
+      <button class="cal-nav-btn" type="button" onclick="changeMonth(1)" aria-label="다음 달">&#10095;</button>
+    </div>
+    <div class="calendar-weekdays">
+      <span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span>
+    </div>
+    <div class="calendar-grid" id="calendar-grid"></div>
+    <div class="garden-detail" id="garden-detail" hidden></div>
+  </div>
+
+  <p class="footer-note">Trust the timing of your life</p>
+</div>
+
+<script>
+// ── 기기 저장소(localStorage) 어댑터 ──────────────────────────────
+// 이 파일이 만들어진 환경에는 window.storage 가 있었지만, 일반 브라우저에는
+// 없어서 localStorage 로 대체한다. 데이터는 "이 브라우저 안에만" 저장되며
+// 서버로 나가지 않는다.
+if (!window.storage) {
+  window.storage = {
+    async get(key) {
+      const value = localStorage.getItem(key);
+      return value === null ? null : { value };
+    },
+    async set(key, value) {
+      localStorage.setItem(key, String(value));
+      return { ok: true };
+    },
+    async list(prefix) {
+      const keys = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith(prefix)) keys.push(k);
+      }
+      return { keys };
+    }
+  };
+}
+// ─────────────────────────────────────────────────────────────────
+
+const STORAGE_KEY_PREFIX = "tarot_entry_";
+
+const TAROT_DECK = [
+  { num: "0", kr: "바보", en: "The Fool", symbol: "🃏", keywords: ["새로운 시작", "순수함", "모험"],
+    up: "오늘은 익숙한 길에서 한 발 벗어나도 좋은 날입니다. 준비가 덜 된 것 같아도, 완벽한 계획보다 지금 내딛는 첫걸음이 더 많은 걸 알려줍니다. 결과를 미리 계산하기보다 호기심이 이끄는 쪽으로 움직여 보세요. 다만 가벼운 마음과 무모함은 다릅니다. 되돌릴 수 없는 큰 결정은 오늘 하지 말고, 작게 시도하고 빠르게 배우는 하루로 삼으세요.",
+    rev: "설렘만 앞서 무작정 뛰어들면 오늘은 넘어지기 쉽습니다. 시작하고 싶은 마음은 진짜지만, 필요한 정보와 최소한의 대비를 건너뛰지 않았는지 돌아보세요. 반대로 겁이 나서 출발을 계속 미루고 있는 것일 수도 있습니다. 두 경우 모두 답은 하나를 구체화하는 것입니다. 오늘 할 수 있는 가장 작은 준비 하나만 끝내 두면, 다음 걸음이 훨씬 가벼워집니다." },
+
+  { num: "I", kr: "마법사", en: "The Magician", symbol: "✨", keywords: ["의지", "창조", "실행력"],
+    up: "필요한 재료는 이미 손에 있습니다. 새로 갖추길 기다리기보다, 지금 가진 기술과 인맥과 시간을 어떻게 연결할지 궁리해 보세요. 오늘은 말한 것을 실제로 만들어내는 힘이 강한 날입니다. 하루를 시작할 때 오늘 끝낼 한 가지를 분명히 정하고 거기에 집중을 모으면, 예상보다 빨리 결과가 나옵니다. 여러 일을 동시에 벌이면 오히려 힘이 흩어집니다.",
+    rev: "의욕은 넘치는데 방향이 흩어져 있진 않나요. 오늘은 재능이 부족한 게 아니라 초점이 없어 헛도는 날일 수 있습니다. 하려는 일을 전부 적어 본 뒤, 지금 당장 손댈 수 있는 하나만 남기고 나머지는 잠시 미뤄 두세요. 또한 말과 행동이 어긋나면 스스로에 대한 신뢰가 깎입니다. 작더라도 오늘 안에 지킬 수 있는 약속만 입 밖에 내세요." },
+
+  { num: "II", kr: "여사제", en: "The High Priestess", symbol: "🌙", keywords: ["직관", "내면", "침묵"],
+    up: "오늘은 밖에서 답을 구하기보다 안에서 이미 알고 있는 것을 확인하는 날입니다. 조언을 너무 많이 모으면 오히려 마음이 흐려집니다. 조용한 시간을 잠깐이라도 만들어, 처음 떠오른 직감이 무엇이었는지 적어 보세요. 서두르지 않아도 됩니다. 지금 명확하지 않은 일은 며칠 안에 윤곽이 드러납니다. 오늘은 결정을 내리기보다 관찰하고 기다리는 편이 유리합니다.",
+    rev: "안에서 울리는 신호를 애써 못 들은 척하고 있진 않나요. 뭔가 이상하다는 느낌이 드는데 논리로 눌러버리면, 나중에 그때 알았는데 하고 후회하기 쉽습니다. 오늘은 남의 말이나 겉으로 드러난 정보만 믿기보다, 위화감의 정체를 한 번은 들여다보세요. 반대로 불안이 근거 없이 커진 것일 수도 있으니, 사실과 상상을 종이에 나눠 적어 구분해 보세요." },
+
+  { num: "III", kr: "여황제", en: "The Empress", symbol: "🌸", keywords: ["풍요", "돌봄", "성장"],
+    up: "돌보고 가꿔 온 것들이 열매를 맺기 시작하는 시기입니다. 오늘은 새로 벌이기보다, 이미 자라고 있는 일이나 관계에 물을 주는 데 시간을 쓰세요. 그 돌봄의 목록에 자신을 꼭 넣으세요. 잘 먹고, 몸을 편하게 하고, 좋아하는 감각을 하나 챙기는 것만으로 오늘의 여유와 창의력이 살아납니다. 성과를 재촉하지 말고 자라는 속도를 믿어 주세요.",
+    rev: "남을 챙기느라 정작 자신은 뒷전이 되어 있진 않나요. 오늘은 베풂이 고갈로 바뀌는 지점을 조심해야 합니다. 도움을 주더라도 한계를 정하고, 여기까지라고 말하는 연습을 해 보세요. 반대로 스스로를 지나치게 방치해 몸과 마음이 메말라 있을 수도 있습니다. 거창한 회복이 아니라 물 한 잔, 산책 십 분처럼 작은 보살핌부터 오늘 시작하세요." },
+
+  { num: "IV", kr: "황제", en: "The Emperor", symbol: "🏛️", keywords: ["질서", "안정", "책임"],
+    up: "오늘은 흐트러진 것에 뼈대를 세우기 좋은 날입니다. 미뤄 둔 규칙, 일정, 경계선을 분명히 정하면 마음이 한결 안정됩니다. 큰 목표를 눈앞의 절차로 잘게 나누고, 오늘 지킬 기준 하나를 스스로에게 약속하세요. 다른 사람에게도 필요한 선은 정중하지만 분명하게 그으세요. 즉흥보다 계획이, 감정보다 원칙이 힘을 발휘하는 하루입니다.",
+    rev: "통제하려는 마음이 지나쳐 자신이나 주변을 뻣뻣하게 만들고 있진 않나요. 규칙이 목적을 잃고 규칙 자체가 되어버리면 숨이 막힙니다. 오늘은 이건 꼭 이래야 한다고 믿는 것 중 하나를 의심해 보세요. 반대로 기준이 아예 없어 이리저리 휘둘리는 상태일 수도 있습니다. 그렇다면 사소한 것 하나라도 오늘은 이렇게 한다고 정해 두는 데서 질서가 생깁니다." },
+
+  { num: "V", kr: "교황", en: "The Hierophant", symbol: "📜", keywords: ["전통", "조언", "배움"],
+    up: "혼자 힘으로 다 풀려 하지 말고, 먼저 그 길을 걸어 본 사람의 방식을 참고하기 좋은 날입니다. 검증된 절차나 매뉴얼이 있다면 오늘은 그대로 따라 보세요. 배움을 청하는 것은 약함이 아니라 지름길입니다. 조언해 줄 만한 사람에게 구체적인 질문 하나를 준비해 연락해 보세요. 내가 속한 곳의 규범과 내 가치가 맞닿는 지점을 확인하는 것도 의미 있습니다.",
+    rev: "원래 그렇게 하는 거라는 말이 오늘은 답이 되지 않습니다. 관습이나 남의 기대를 그대로 따르다 내 기준을 잃고 있진 않은지 살펴보세요. 규칙을 깨라는 뜻이 아니라, 왜 그렇게 하는지 스스로 납득한 뒤에 따르라는 신호입니다. 반대로 조언을 전부 튕겨내고 있다면, 신뢰할 만한 한 사람의 말은 오늘 한 번 끝까지 들어 보세요." },
+
+  { num: "VI", kr: "연인", en: "The Lovers", symbol: "💞", keywords: ["선택", "관계", "조화"],
+    up: "오늘은 두 갈래 길 앞에서 무엇을 더 소중히 여기는지 스스로에게 물어야 하는 날입니다. 조건을 저울질하기 전에, 어느 쪽이 나다운 선택인지를 먼저 보세요. 관계에서는 미뤄 둔 진심을 솔직하게 전하기 좋은 때입니다. 상대의 마음을 넘겨짚지 말고 직접 묻고 말하세요. 어중간하게 걸쳐 두기보다 한쪽을 분명히 택할 때 마음이 가벼워집니다.",
+    rev: "선택을 계속 미루면서 양쪽 모두 놓치지 않으려 하고 있진 않나요. 오늘은 그 애매함이 스스로를 지치게 만듭니다. 결정을 어렵게 하는 진짜 이유가 두려움인지 정보 부족인지 적어 보세요. 관계에서는 가치관이 어긋난 부분을 덮어두고 있을 수 있습니다. 불편해도 그 지점을 한 번은 말로 꺼내야 다음이 있습니다." },
+
+  { num: "VII", kr: "전차", en: "The Chariot", symbol: "🐎", keywords: ["추진력", "의지", "승리"],
+    up: "방향은 이미 정해졌습니다. 오늘은 재검토보다 밀어붙이는 힘이 필요한 날입니다. 흔들리는 마음과 산만한 유혹을 한쪽으로 몰아, 정한 목표에 속도를 내세요. 상반된 감정이 있어도 괜찮습니다. 둘 다 인정하되 지금은 한 방향으로 고삐를 잡으면 됩니다. 오늘 낸 추진력이 다음 며칠의 흐름을 만듭니다. 마무리 짓고 싶던 일을 오늘 끝까지 밀고 가세요.",
+    rev: "의욕은 큰데 마음이 서로 다른 방향으로 잡아당겨 앞으로 못 나가고 있진 않나요. 오늘은 액셀과 브레이크를 동시에 밟는 상태일 수 있습니다. 목표를 너무 크게 잡았다면 오늘 도달할 지점까지만 좁혀 보세요. 감정에 휘둘려 무리하게 돌진하는 경우도 조심해야 합니다. 잠깐 멈춰 방향을 확인한 뒤 다시 출발해도 늦지 않습니다." },
+
+  { num: "VIII", kr: "힘", en: "Strength", symbol: "🦁", keywords: ["인내", "용기", "온화함"],
+    up: "오늘 필요한 힘은 밀어붙이는 힘이 아니라 다스리는 힘입니다. 화가 나거나 조급해지는 순간, 반응하기 전에 한 박자 쉬어 보세요. 부드럽게 대응할수록 상황을 더 오래 붙들 수 있습니다. 어려운 대화나 참을성이 필요한 일이 있다면 오늘은 잘 풀리는 날입니다. 자신의 약한 부분도 다그치지 말고 따뜻하게 데리고 가세요. 인내가 곧 실력이 됩니다.",
+    rev: "속에서 끓는 감정을 억지로 누르다 지쳐 있진 않나요. 참는 것과 외면하는 것은 다릅니다. 오늘은 화나 두려움의 원인을 솔직히 인정하는 데서 힘이 회복됩니다. 반대로 사소한 일에 쉽게 폭발하고 있다면, 지금 몸이 지쳤다는 신호일 수 있습니다. 무리한 일정을 하나 덜고, 자신에게 너그러워지는 것부터 오늘의 과제로 삼으세요." },
+
+  { num: "IX", kr: "은둔자", en: "The Hermit", symbol: "🏮", keywords: ["성찰", "고독", "탐구"],
+    up: "오늘은 밖의 소음에서 잠시 물러나 혼자만의 시간을 갖기 좋은 날입니다. 답을 찾으러 여기저기 묻고 다니기보다, 조용한 곳에서 스스로에게 질문을 던져 보세요. 이미 알고 있지만 인정하지 않은 것이 떠오를 수 있습니다. 약속을 하나 줄이고 그 시간을 산책이나 기록에 쓰세요. 지금의 고요는 외로움이 아니라 정리의 시간입니다.",
+    rev: "혼자 있는 시간이 성찰이 아니라 고립으로 굳어가고 있진 않나요. 생각이 같은 자리를 맴돈다면, 오늘은 신뢰하는 한 사람에게 상황을 말로 꺼내 보세요. 밖의 빛이 들어와야 보이는 것이 있습니다. 반대로 너무 바빠 자신을 들여다볼 틈이 없었다면, 오늘 십 분이라도 화면을 끄고 혼자 앉아 보세요. 지금 나에게 필요한 쪽을 고르세요." },
+
+  { num: "X", kr: "운명의 수레바퀴", en: "Wheel of Fortune", symbol: "🎡", keywords: ["전환점", "순환", "기회"],
+    up: "흐름이 바뀌는 지점에 서 있습니다. 오늘은 모든 것을 계획대로 붙들려 하기보다, 예상 밖의 변화에 유연하게 올라타는 편이 유리합니다. 갑자기 들어온 기회나 연락을 무시하지 말고 한 번은 살펴보세요. 지금 잘 안 풀리는 일도 곧 국면이 달라질 수 있으니 성급히 끝내지 마세요. 통제할 수 없는 부분은 내려놓고 할 수 있는 준비만 해 두면 됩니다.",
+    rev: "상황이 마음대로 안 되어 같은 자리에 멈춰 있는 것처럼 느껴질 수 있습니다. 오늘은 흐름을 억지로 되돌리려 애쓰기보다, 반복되는 패턴이 무엇인지 알아차리는 게 먼저입니다. 매번 비슷한 지점에서 걸린다면 그 고리를 끊을 작은 변화 하나를 시도해 보세요. 운이 나쁘다고 단정하기 전에, 바뀔 때까지 기다릴 여유를 스스로에게 주세요." },
+
+  { num: "XI", kr: "정의", en: "Justice", symbol: "⚖️", keywords: ["균형", "공정", "결정"],
+    up: "오늘은 감정보다 사실을 먼저 놓고 봐야 하는 날입니다. 판단이 필요한 일이 있다면, 양쪽 입장을 종이에 나눠 적어 냉정하게 견줘 보세요. 지난 선택의 결과가 지금 돌아오고 있을 수 있습니다. 책임질 부분은 인정하고, 바로잡을 것은 미루지 말고 오늘 손보세요. 솔직하고 공정한 태도가 신뢰를 만들고, 그 신뢰가 다음 기회를 엽니다.",
+    rev: "속으로는 알면서 결론을 미루거나, 내게 유리한 쪽으로만 상황을 해석하고 있진 않나요. 오늘은 그 편향을 스스로 점검해야 합니다. 남 탓으로 돌리고 싶은 일에서 내 몫이 얼마인지 정직하게 따져 보세요. 반대로 필요 이상으로 자신을 몰아세우고 있다면, 책임의 범위를 사실에 맞게 다시 그으세요. 공정함은 남에게도 나에게도 같게 적용되어야 합니다." },
+
+  { num: "XII", kr: "매달린 사람", en: "The Hanged Man", symbol: "🌀", keywords: ["기다림", "관점전환", "내려놓음"],
+    up: "지금은 멈춘 것처럼 보여도 실은 관점을 바꾸는 시간입니다. 오늘은 억지로 밀어붙이면 오히려 꼬입니다. 하던 방식이 안 통한다면 손을 놓고, 문제를 반대편에서 바라보세요. 기다려야 하는 일은 조급해하지 말고 그대로 두세요. 통제하려던 것을 하나 내려놓으면, 예상치 못한 해결의 실마리가 보입니다. 오늘의 정지는 후퇴가 아닙니다.",
+    rev: "더 기다릴 필요가 없는데도 결정을 미루며 매달려 있진 않나요. 희생하고 있다는 느낌만 쌓이고 아무것도 바뀌지 않는다면, 오늘은 그 상태에서 내려올 때입니다. 무엇을 붙들고 있는지, 그것을 놓으면 정말 무슨 일이 생기는지 적어 보세요. 반대로 잠깐 멈춰야 할 일을 억지로 밀어붙이고 있다면, 오늘 하루는 판단을 보류하세요." },
+
+  { num: "XIII", kr: "죽음", en: "Death", symbol: "🦋", keywords: ["끝과 시작", "변화", "재생"],
+    up: "하나가 끝나야 다음이 시작됩니다. 오늘은 이미 생명이 다한 일, 관계, 습관을 붙들고 있는 손을 놓기 좋은 날입니다. 아쉬움이 남더라도 억지로 되살리려 하기보다 잘 마무리하는 데 힘을 쓰세요. 끝을 인정하면 그 자리에 새로운 것이 들어올 공간이 생깁니다. 오늘 정리할 것 하나를 정해, 미련 없이 흘려보내세요. 변화는 이미 시작됐습니다.",
+    rev: "끝난 걸 알면서도 놓지 못해 변화가 계속 미뤄지고 있진 않나요. 오늘은 그 저항이 스스로를 더 지치게 만듭니다. 무엇이 두려워 붙들고 있는지 들여다보세요. 완전히 끊어내는 게 부담이라면, 오늘은 아주 작은 것 하나만 정리해도 됩니다. 낡은 것을 조금씩 비워야 멈춰 있던 흐름이 다시 움직입니다." },
+
+  { num: "XIV", kr: "절제", en: "Temperance", symbol: "🌊", keywords: ["균형", "조율", "인내"],
+    up: "오늘은 어느 한쪽으로 치우치지 않는 균형이 필요한 날입니다. 일과 쉼, 말과 침묵, 주는 것과 받는 것 사이에서 중간 지점을 찾아보세요. 서로 다른 요구나 의견이 있다면, 극단을 피하고 둘을 섞는 방법을 궁리하면 길이 보입니다. 급하게 몰아붙이기보다 알맞은 속도로 꾸준히 가는 것이 오늘은 더 멀리 갑니다. 조율하는 하루로 삼으세요.",
+    rev: "요즘 생활이 한쪽으로 쏠려 있진 않나요. 일만, 혹은 걱정만, 혹은 참기만 하며 균형이 무너진 상태일 수 있습니다. 오늘은 과하게 쓰고 있는 것 하나를 줄이고, 비어 있는 쪽에 조금 채워 넣으세요. 조급함 때문에 무리하게 속도를 내다 실수가 나올 수도 있으니, 한 템포 늦추는 것이 오히려 빠른 길입니다." },
+
+  { num: "XV", kr: "악마", en: "The Devil", symbol: "⛓️", keywords: ["집착", "속박", "그림자"],
+    up: "오늘은 스스로를 옭아매고 있는 것이 무엇인지 똑바로 볼 때입니다. 끊어야 하는 걸 알면서 반복하는 습관, 의무감뿐인 관계, 어쩔 수 없다는 말버릇을 하나 떠올려 보세요. 그 사슬은 생각보다 느슨할 수 있습니다. 벗어날 힘이 없는 게 아니라 아직 안 쓴 것뿐입니다. 오늘 그 고리에서 반 발짝만 빠져나오는 행동 하나를 해 보세요.",
+    rev: "묶여 있던 것에서 벗어나기 시작하는 흐름입니다. 오늘은 그동안 당연하다고 여겼던 제약 하나에 의문을 던져 보세요. 사실은 내가 선택할 수 있었던 것임을 알아차리는 순간, 힘의 방향이 바뀝니다. 다만 오래된 습관은 한 번에 사라지지 않으니, 자신을 몰아세우지 말고 벗어나는 과정에 시간을 허락하세요." },
+
+  { num: "XVI", kr: "탑", en: "The Tower", symbol: "⚡", keywords: ["급변", "붕괴", "각성"],
+    up: "예상치 못한 흔들림이 있을 수 있는 날입니다. 갑작스러운 변화가 당황스럽겠지만, 무너지는 것은 애초에 튼튼하지 않았던 부분입니다. 오늘은 방어하거나 덮으려 애쓰기보다, 드러난 사실을 인정하는 편이 낫습니다. 붙잡을 수 없는 것은 놓고, 지금 확실한 것 하나에 발을 딛으세요. 지나고 나면 이 자리에 더 단단한 것이 세워집니다.",
+    rev: "닥쳐올 변화를 미루거나 애써 못 본 척하며 버티고 있진 않나요. 이미 금이 간 곳을 계속 덧대기만 하면 나중에 더 크게 무너집니다. 오늘은 두렵더라도 문제의 핵심을 한 번 들여다보고, 스스로 정리할 수 있는 것부터 손대세요. 위기가 지나가는 중일 수도 있으니, 최악을 넘겼다면 서서히 숨을 고르며 복구를 시작하세요." },
+
+  { num: "XVII", kr: "별", en: "The Star", symbol: "⭐", keywords: ["희망", "치유", "영감"],
+    up: "힘든 고비를 지나 한숨 돌리는 시점입니다. 오늘은 조급하게 성과를 좇기보다, 회복과 희망에 초점을 두세요. 마음이 향하는 일, 오래 미뤄 둔 소망을 하나 떠올려 작게라도 다시 시작해 보세요. 스스로를 조금 더 믿어도 되는 때입니다. 잘 자고, 잘 쉬고, 좋은 것을 보는 것만으로 오늘은 다음을 위한 힘이 채워집니다. 서두르지 않아도 길은 열려 있습니다.",
+    rev: "요즘 마음이 지쳐 앞이 잘 안 보이고, 스스로에 대한 믿음도 옅어져 있진 않나요. 오늘은 큰 희망을 억지로 끌어올리려 하지 말고, 아주 작은 회복 하나에만 집중하세요. 잠, 물, 햇빛, 짧은 산책 같은 것들입니다. 기대를 너무 높게 잡아 지친 것일 수도 있으니, 목표를 지금 몸 상태에 맞게 낮춰 다시 세우세요." },
+
+  { num: "XVIII", kr: "달", en: "The Moon", symbol: "🌕", keywords: ["불안", "직관", "무의식"],
+    up: "오늘은 모든 것이 또렷하지 않고, 이유 모를 불안이 스칠 수 있는 날입니다. 안개 속에서 억지로 큰 결정을 내리려 하지 마세요. 대신 지금 느끼는 감정을 있는 그대로 적어 보고, 사실인 것과 상상인 것을 나눠 보세요. 직감은 살피되 두려움에 끌려가지는 마세요. 며칠 안에 상황이 분명해지니, 오늘은 한 걸음만 딛고 나머지는 미뤄도 됩니다.",
+    rev: "흐릿하던 것이 조금씩 걷히는 흐름입니다. 오늘은 그동안 자신을 괴롭히던 불안의 정체를 한 번 마주해 보세요. 생각보다 근거가 약하거나 이미 지나간 일일 수 있습니다. 다만 아직 완전히 맑지는 않으니, 새로 알게 된 사실을 성급히 결론으로 굳히기보다 하루 정도 두고 다시 보세요. 오해가 있었다면 풀 기회이기도 합니다." },
+
+  { num: "XIX", kr: "태양", en: "The Sun", symbol: "☀️", keywords: ["성취", "활력", "기쁨"],
+    up: "밝고 순조로운 기운이 도는 날입니다. 오늘은 망설이던 일을 자신 있게 밀고 나가도 좋습니다. 숨기지 말고 드러내고, 사람들 앞에서 말해도 되는 때입니다. 잘 되고 있는 것에 눈을 두고 그 에너지를 키우세요. 다만 지나친 낙관으로 세부를 건너뛰지는 마세요. 기분 좋게 움직이되 마무리는 꼼꼼히 하면, 오늘의 성과가 오래갑니다.",
+    rev: "좋은 흐름이 분명히 있는데, 스스로 그것을 잘 느끼지 못하거나 자신감이 가려져 있진 않나요. 오늘은 잘 안 되는 한 가지에만 시선이 쏠려 있을 수 있습니다. 이미 이룬 것, 지금 괜찮은 것을 세 가지만 적어 보세요. 남과 비교하며 빛을 깎아내리고 있다면, 오늘은 내 속도와 내 성취에만 집중하는 연습을 하세요." },
+
+  { num: "XX", kr: "심판", en: "Judgement", symbol: "🎺", keywords: ["각성", "재평가", "부름"],
+    up: "지난 시간을 돌아보고 매듭을 짓기 좋은 날입니다. 오늘은 그동안의 선택과 결과를 솔직하게 평가해 보세요. 자책이 아니라, 무엇을 배웠고 무엇을 바꿀지 정리하는 작업입니다. 미뤄 둔 결정이나 오래된 부름이 다시 떠오른다면, 응답할 때가 됐다는 신호입니다. 과거를 정리해 용서할 것은 용서하고, 오늘부터 새 기준으로 움직이세요.",
+    rev: "스스로를 지나치게 심판하며 지난 일을 곱씹고 있진 않나요. 오늘은 반성과 자책을 구분해야 합니다. 이미 배운 교훈을 계속 되풀이해 자신을 벌하는 것은 도움이 되지 않습니다. 반대로 마주해야 할 결과를 계속 회피하고 있다면, 오늘은 작게라도 한 가지를 마주 보세요. 들려오는 부름을 못 들은 척하는 것도 지금은 멈출 때입니다." },
+
+  { num: "XXI", kr: "세계", en: "The World", symbol: "🌍", keywords: ["완성", "성취", "통합"],
+    up: "하나의 여정이 마무리되는 시점입니다. 오늘은 새로 벌이기보다, 거의 다 온 일을 끝까지 완성하는 데 힘을 쓰세요. 마지막 매듭을 짓고 나면 다음 단계로 넘어갈 자격이 생깁니다. 그동안 이룬 것을 스스로 충분히 인정하고, 도움을 준 사람에게 고마움을 전하세요. 끝맺음을 제대로 해야 다음 시작이 가볍습니다. 오늘은 마침표를 찍는 날입니다.",
+    rev: "거의 다 왔는데 마지막 한 걸음에서 멈춰 마무리를 못 짓고 있진 않나요. 오늘은 완성을 막는 그 작은 걸림돌이 무엇인지 확인하세요. 두려움일 수도, 미련일 수도 있습니다. 아니면 이미 끝난 일에 계속 머물러 다음으로 못 넘어가는 상태일 수도 있습니다. 남은 것을 목록으로 적어 하나씩 지우며, 오늘 안에 매듭에 가까이 가 보세요." },
+];
+
+/* ── 유틸 ─────────────────────────────────── */
+function getTodayKey() {
+  const d = new Date();
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
+
+function formatDateKR(dateStr) {
+  const parts = dateStr.split("-").map(Number);
+  const dt = new Date(parts[0], parts[1] - 1, parts[2]);
+  const days = ["일", "월", "화", "수", "목", "금", "토"];
+  return parts[0] + "년 " + parts[1] + "월 " + parts[2] + "일 (" + days[dt.getDay()] + ")";
+}
+
+function escapeHtml(str) {
+  const div = document.createElement("div");
+  div.textContent = str == null ? "" : str;
+  return div.innerHTML;
+}
+
+function meaningText(card) {
+  const base = TAROT_DECK.find(function (c) { return c.num === card.num; }) || {};
+  return card.reversed ? (base.rev || "") : (base.up || "");
+}
+
+function keywordsOf(card) {
+  const base = TAROT_DECK.find(function (c) { return c.num === card.num; }) || {};
+  return base.keywords || [];
+}
+
+// 그 날의 일기 내용을 꺼낸다. 예전 버전(아침 한 줄 + 밤 회고로 나뉘어 있던 구조)으로
+// 저장된 기록도 그대로 이어서 볼 수 있도록, note가 없으면 옛 필드를 이어붙여 보여준다.
+function journalTextOf(entry) {
+  if (!entry) return "";
+  if (entry.note != null) return entry.note;
+  return [entry.morning, entry.evening].filter(Boolean).join("\n\n");
+}
+
+async function persist(entry) {
+  try {
+    await window.storage.set(STORAGE_KEY_PREFIX + entry.date, JSON.stringify(entry));
+  } catch (e) {
+    console.error("저장 실패", e);
+  }
+}
+
+function flashStatus(id, msg) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.add("saved");
+  setTimeout(function () { el.textContent = ""; el.classList.remove("saved"); }, 1800);
+}
+
+/* ── 상태 ─────────────────────────────────── */
+let currentEntry = null;
+
+function renderToday() {
+  const drawStage = document.getElementById("draw-stage");
+  const resultStage = document.getElementById("result-stage");
+
+  if (!currentEntry || !currentEntry.card) {
+    drawStage.style.display = "block";
+    resultStage.classList.remove("show");
+    return;
+  }
+
+  drawStage.style.display = "none";
+  const card = currentEntry.card;
+
+  document.getElementById("arcana-num").textContent = card.num;
+  const symEl = document.getElementById("card-symbol");
+  symEl.textContent = card.symbol;
+  symEl.classList.toggle("reversed", !!card.reversed);
+  document.getElementById("card-name-kr").textContent = card.kr;
+  document.getElementById("card-name-en").textContent = card.en;
+  document.getElementById("card-orientation").textContent = card.reversed ? "역방향" : "정방향";
+  document.getElementById("card-meaning").textContent = meaningText(card);
+
+  const kw = document.getElementById("card-keywords");
+  kw.innerHTML = "";
+  keywordsOf(card).forEach(function (k) {
+    const s = document.createElement("span");
+    s.className = "keyword-chip";
+    s.textContent = k;
+    kw.appendChild(s);
+  });
+
+  document.getElementById("journal-text").value = journalTextOf(currentEntry);
+
+  resultStage.classList.add("show");
+}
+
+function pickRandomCard() {
+  const c = TAROT_DECK[Math.floor(Math.random() * TAROT_DECK.length)];
+  return {
+    num: c.num, kr: c.kr, en: c.en, symbol: c.symbol,
+    reversed: Math.random() < 0.35,
+  };
+}
+
+async function drawCard() {
+  if (currentEntry && currentEntry.card) return;
+
+  const cardBack = document.getElementById("card-back");
+  if (cardBack) {
+    cardBack.style.transform = "scale(0.92) rotateY(15deg)";
+    setTimeout(function () { cardBack.style.transform = ""; }, 180);
+  }
+
+  const picked = pickRandomCard();
+  const now = new Date().toISOString();
+  currentEntry = {
+    date: getTodayKey(),
+    card: picked,
+    drawnAt: now,
+    note: "", noteAt: null,
+    savedAt: now,
+  };
+  await persist(currentEntry);
+
+  setTimeout(function () {
+    renderToday();
+    loadGarden();
+  }, 220);
+}
+
+async function saveToday() {
+  if (!currentEntry) return;
+  const val = document.getElementById("journal-text").value.trim();
+  currentEntry.note = val;
+  currentEntry.noteAt = new Date().toISOString();
+  currentEntry.savedAt = new Date().toISOString();
+  await persist(currentEntry);
+  flashStatus("journal-status", val ? "저장했어요" : "지웠어요");
+  renderToday();
+  loadGarden();
+}
+
+/* ── 정원 (지난 기록) ─────────────────────── */
+async function readAllEntries() {
+  let entries = [];
+  try {
+    const r = await window.storage.list(STORAGE_KEY_PREFIX);
+    const keys = (r && r.keys) || [];
+    for (const k of keys) {
+      try {
+        const rr = await window.storage.get(k);
+        if (rr && rr.value) entries.push(JSON.parse(rr.value));
+      } catch (e) { /* skip */ }
+    }
+  } catch (e) { /* skip */ }
+  return entries.filter(function (e) { return e && e.date && e.card; });
+}
+
+let calYear = null;
+let calMonth = null; // 0-indexed
+let entriesByDate = {};
+
+function initCalendarState() {
+  const now = new Date();
+  calYear = now.getFullYear();
+  calMonth = now.getMonth();
+}
+
+// 그 날의 기록 완성도: "none"(기록 없음) / "partial"(카드는 뽑았지만 아직 일기를
+// 안 씀) / "full"(일기까지 남겨 꽃이 만개함)
+function entryState(entry) {
+  if (!entry) return "none";
+  const hasNote = !!journalTextOf(entry).trim();
+  return hasNote ? "full" : "partial";
+}
+
+// 달력 꽃 색상 팔레트 (배경 대비 기준을 통과하도록 고른 색들).
+// 날짜 문자열을 해시해서 색을 고르기 때문에, 하루하루 꽃 색이 다양하게 바뀌면서도
+// 같은 날은 다시 봐도 항상 같은 색을 유지합니다.
+const FLOWER_PALETTE = [
+  { petal: "#d9548f", center: "#a83768" }, // 로즈
+  { petal: "#d4552f", center: "#a83f21" }, // 코랄
+  { petal: "#b87816", center: "#8f5c10" }, // 앰버
+  { petal: "#8b5fc9", center: "#6a459e" }, // 그레이프
+  { petal: "#2f80c9", center: "#22609c" }, // 스카이블루
+  { petal: "#1f9683", center: "#167a6a" }, // 틸
+  { petal: "#c96a1f", center: "#9f5217" }, // 탠저린
+  { petal: "#3f9350", center: "#2f7440" }, // 리프그린
+  { petal: "#5f6fd0", center: "#4553a8" }, // 페리윙클
+];
+
+function hashDateToIndex(dateKey, mod) {
+  let hash = 0;
+  for (let i = 0; i < dateKey.length; i++) {
+    hash = (hash * 31 + dateKey.charCodeAt(i)) >>> 0;
+  }
+  return hash % mod;
+}
+
+function flowerColorsFor(dateKey) {
+  const idx = hashDateToIndex(dateKey, FLOWER_PALETTE.length);
+  return FLOWER_PALETTE[idx];
+}
+
+function calFlowerIcon(state, dateKey) {
+  if (state === "none") return "";
+  const colors = flowerColorsFor(dateKey);
+  let petals = "";
+  if (state === "full") {
+    for (let i = 0; i < 6; i++) {
+      petals += '<ellipse class="cal-petal" fill="' + colors.petal + '" rx="3" ry="5.6" cy="-5.6" transform="rotate(' + (i * 60) + ')"/>';
+    }
+  }
+  const centerR = state === "full" ? 2.4 : 3.1;
+  return '<svg class="cal-flower-svg" width="16" height="16" viewBox="-9 -9 18 18" xmlns="http://www.w3.org/2000/svg">' +
+    '<g>' + petals + '<circle class="cal-center" fill="' + colors.center + '" r="' + centerR + '"/></g>' +
+    '</svg>';
+}
+
+async function loadGarden() {
+  const entries = await readAllEntries();
+  entriesByDate = {};
+  entries.forEach(function (e) { entriesByDate[e.date] = e; });
+
+  const countEl = document.getElementById("archive-count");
+  countEl.textContent = entries.length ? ("총 " + entries.length + "일 기록") : "";
+
+  if (calYear === null) initCalendarState();
+  renderCalendar();
+}
+
+function changeMonth(delta) {
+  if (calYear === null) initCalendarState();
+  calMonth += delta;
+  if (calMonth < 0) { calMonth = 11; calYear -= 1; }
+  if (calMonth > 11) { calMonth = 0; calYear += 1; }
+  renderCalendar();
+}
+
+function renderCalendar() {
+  const label = document.getElementById("calendar-month-label");
+  const grid = document.getElementById("calendar-grid");
+  if (!label || !grid) return;
+
+  label.textContent = calYear + "년 " + (calMonth + 1) + "월";
+
+  const firstDay = new Date(calYear, calMonth, 1);
+  const startWeekday = firstDay.getDay();
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  const todayKey = getTodayKey();
+
+  grid.innerHTML = "";
+
+  for (let i = 0; i < startWeekday; i++) {
+    const empty = document.createElement("div");
+    empty.className = "cal-day empty-cell";
+    grid.appendChild(empty);
+  }
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dateKey = calYear + "-" + String(calMonth + 1).padStart(2, "0") + "-" + String(day).padStart(2, "0");
+    const entry = entriesByDate[dateKey];
+    const state = entryState(entry);
+
+    const cell = document.createElement("button");
+    cell.type = "button";
+    cell.className = "cal-day" + (state !== "none" ? " has-entry" : "") + (dateKey === todayKey ? " today" : "");
+    cell.innerHTML =
+      '<span class="cal-flower">' + calFlowerIcon(state, dateKey) + "</span>" +
+      '<span class="cal-date-num">' + day + "</span>";
+    if (state !== "none") {
+      cell.addEventListener("click", function () { openGardenDetail(dateKey); });
+    } else {
+      cell.disabled = true;
+    }
+    grid.appendChild(cell);
+  }
+}
+
+async function openGardenDetail(date) {
+  const box = document.getElementById("garden-detail");
+  let entry = null;
+  try {
+    const r = await window.storage.get(STORAGE_KEY_PREFIX + date);
+    if (r && r.value) entry = JSON.parse(r.value);
+  } catch (e) { /* skip */ }
+  if (!entry) return;
+
+  box.hidden = false;
+  box.innerHTML =
+    '<div class="detail-head">' +
+      "<div>" +
+        '<p class="detail-date">' + escapeHtml(formatDateKR(entry.date)) + "</p>" +
+        '<p class="detail-card">' + escapeHtml(entry.card.symbol + " " + entry.card.kr + " · " + (entry.card.reversed ? "역방향" : "정방향")) + "</p>" +
+      "</div>" +
+      '<button class="link-btn" onclick="closeGardenDetail()">닫기</button>' +
+    "</div>" +
+    '<div class="meaning-box"><p class="label">카드가 전하는 말</p><p>' + escapeHtml(meaningText(entry.card)) + "</p></div>" +
+    '<div class="entry-block">' +
+      '<div class="entry-head"><span class="entry-title">📝 오늘의 일기</span></div>' +
+      '<textarea id="d-note"></textarea>' +
+      '<button class="save-btn" onclick="savePast(\'' + entry.date + '\',\'note\')">저장</button>' +
+      '<p class="save-status" id="d-note-status"></p>' +
+    "</div>";
+
+  document.getElementById("d-note").value = journalTextOf(entry);
+  box.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+function closeGardenDetail() {
+  const b = document.getElementById("garden-detail");
+  b.hidden = true;
+  b.innerHTML = "";
+}
+
+async function savePast(date, field) {
+  let entry = null;
+  try {
+    const r = await window.storage.get(STORAGE_KEY_PREFIX + date);
+    if (r && r.value) entry = JSON.parse(r.value);
+  } catch (e) { /* skip */ }
+  if (!entry) return;
+
+  const val = document.getElementById("d-" + field).value.trim();
+  entry[field] = val;
+  entry[field + "At"] = new Date().toISOString();
+  entry.savedAt = new Date().toISOString();
+  await persist(entry);
+  flashStatus("d-" + field + "-status", val ? "저장했어요" : "지웠어요");
+
+  if (date === getTodayKey()) {
+    currentEntry = entry;
+    renderToday();
+  }
+  loadGarden();
+}
+
+/* ── 시작 ─────────────────────────────────── */
+async function boot() {
+  document.getElementById("today-date").textContent = formatDateKR(getTodayKey());
+  try {
+    const r = await window.storage.get(STORAGE_KEY_PREFIX + getTodayKey());
+    if (r && r.value) currentEntry = JSON.parse(r.value);
+  } catch (e) { /* 오늘 기록 없음 */ }
+  renderToday();
+  loadGarden();
+}
+
+boot();
+
+// 오프라인에서도 열리도록 서비스워커 등록 (지원 안 하는 브라우저는 조용히 무시)
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("sw.js").catch(function () { /* 무시 */ });
+  });
+}
+</script>
+
+</body>
+</html>
